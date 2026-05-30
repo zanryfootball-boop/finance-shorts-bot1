@@ -64,19 +64,36 @@ def generate_script():
     color_theme = random.choice(COLOR_THEMES)
     hashtags = random.choice(HASHTAGS)
     slot = "morning" if datetime.now().hour < 12 else "evening"
+    if any(word in niche for word in ["crypto", "bitcoin", "blockchain"]):
+        background = "crypto_network"
+    elif any(word in niche for word in ["stock", "invest", "market"]):
+        background = "stock_chart"
+    elif any(word in niche for word in ["gold", "wealth", "rich", "millionaire"]):
+        background = "gold_bars"
+    elif any(word in niche for word in ["compound", "growth", "build", "save"]):
+        background = "growth_graph"
+    elif any(word in niche for word in ["debt", "budget", "money habits"]):
+        background = "money_rain"
+    elif any(word in niche for word in ["passive", "income", "side hustle"]):
+        background = "coin_stack"
+    elif any(word in niche for word in ["bank", "secret", "vault"]):
+        background = "bank_vault"
+    else:
+        background = "city_skyline"
     prompt = (
         "You are a viral YouTube Shorts script writer specializing in finance and money. "
         "Write a 60-second mind-blowing script for a Short about: " + niche + "\n\n"
         "The video is for the " + slot + " audience.\n\n"
-       "Rules:\n"
-       "- Start with a shocking money hook that stops people scrolling\n"
-       "- Write each line as a complete sentence, not a fragment\n"
-       "- Each line maximum 12 words, clear and powerful\n"
-       "- Add natural flow between lines, each line connects to the next\n"
-       "- Use pauses naturally, do not rush the content\n"
-       "- Include one shocking money statistic with exact numbers\n"
-       "- Speak like a professional documentary narrator\n"
-       "- End with a powerful emotional call to action\n\n"
+        "Rules:\n"
+        "- Start with a shocking money hook that stops people scrolling\n"
+        "- Write each line as a complete sentence not a fragment\n"
+        "- Each line maximum 12 words clear and powerful\n"
+        "- Add natural flow between lines each line connects to the next\n"
+        "- Include one shocking money statistic with exact numbers\n"
+        "- Speak like a professional documentary narrator\n"
+        "- End with a powerful emotional call to action\n\n"
+        "Return ONLY valid JSON with this exact structure:\n"
+        "{\n"
         '  "title": "YouTube title (max 70 chars, money/finance focused)",\n'
         '  "description": "YouTube description (2-3 sentences) end with these exact hashtags: ' + hashtags + ' #shorts",\n'
         '  "tags": ["shorts", "youtubeshorts"],\n'
@@ -100,15 +117,15 @@ def generate_script():
         max_tokens=1000,
         temperature=0.9,
     )
-  raw = response.choices[0].message.content.strip()
-if "```" in raw:
-    raw = raw.split("```")[1]
-    if raw.startswith("json"):
-        raw = raw[4:]
-raw = raw.strip()
-start = raw.find("{")
-end = raw.rfind("}") + 1
-raw = raw[start:end]
+    raw = response.choices[0].message.content.strip()
+    if "```" in raw:
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    raw = raw.strip()
+    start = raw.find("{")
+    end = raw.rfind("}") + 1
+    raw = raw[start:end]
     script = json.loads(raw)
     script["niche"] = niche
     script["generated_at"] = datetime.utcnow().isoformat()
