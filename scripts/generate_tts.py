@@ -3,8 +3,9 @@ import json
 import os
 import whisper
 import edge_tts
+import subprocess
 
-VOICE = "en-US-GuyNeural"
+VOICE = "en-US-AndrewNeural"
 
 async def synthesize(text, voice, output_path):
     communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="+0Hz")
@@ -17,31 +18,29 @@ def fix_pronunciation(text):
         "cryptocurrencies": "crypto currencies",
         "blockchain": "block chain",
         "Blockchain": "block chain",
-        "portfolio": "port fol ee oh",
-        "Portfolio": "port fol ee oh",
+        "portfolio": "port folio",
+        "Portfolio": "port folio",
         "dividends": "div ih dends",
         "Dividends": "div ih dends",
-        "compounding": "com pound ing",
-        "Compounding": "com pound ing",
+        "compounding": "com pounding",
+        "Compounding": "com pounding",
         "inflation": "in flay shun",
         "Inflation": "in flay shun",
-        "amortization": "ah mor tih zay shun",
-        "liquidity": "lih KWID ih tee",
-        "Liquidity": "lih KWID ih tee",
-        "diversification": "dih ver sih fih KAY shun",
-        "Diversification": "dih ver sih fih KAY shun",
-        "entrepreneur": "on treh preh NEUR",
-        "Entrepreneur": "on treh preh NEUR",
-        "millennials": "mih LEN ee ulz",
-        "Millennials": "mih LEN ee ulz",
-        "etc": "and so on",
-        "vs": "versus",
-        "IQ": "eye queue",
+        "amortization": "amor tih zay shun",
+        "liquidity": "lih kwid ih tee",
+        "Liquidity": "lih kwid ih tee",
+        "diversification": "dih ver sih fih kay shun",
+        "Diversification": "dih ver sih fih kay shun",
+        "entrepreneur": "on treh preh nur",
+        "Entrepreneur": "on treh preh nur",
         "ROI": "return on investment",
         "ETF": "E T F",
         "S&P": "S and P",
         "401k": "four oh one k",
         "GDP": "G D P",
+        "etc": "and so on",
+        "vs": "versus",
+        "IQ": "eye queue",
     }
     for word, replacement in replacements.items():
         text = text.replace(word, replacement)
@@ -49,8 +48,21 @@ def fix_pronunciation(text):
 
 def build_text(script):
     all_lines = [script["hook"]] + script["lines"]
-    result = " ... ".join(all_lines)
-    return result
+    return " ... ".join(all_lines)
+
+def enhance_audio(input_path, output_path):
+    try:
+        subprocess.run([
+            "ffmpeg", "-y", "-i", input_path,
+            "-af", "highpass=f=80,lowpass=f=12000,volume=1.5",
+            "-ar", "44100", "-ac", "1",
+            output_path
+        ], check=True, capture_output=True)
+        print("[OK] Audio enhanced")
+    except Exception as e:
+        print("[WARN] Enhancement failed: " + str(e))
+        import shutil
+        shutil.copy(input_path, output_path)
 
 def generate_tts(script_path="script.json", output_path="narration.mp3"):
     with open(script_path) as f:
@@ -58,9 +70,13 @@ def generate_tts(script_path="script.json", output_path="narration.mp3"):
     full_text = build_text(script)
     full_text = fix_pronunciation(full_text)
     print("[INFO] Synthesizing with voice: " + VOICE)
-    asyncio.run(synthesize(full_text, VOICE, output_path))
+    raw_path = output_path.replace(".mp3", "_raw.mp3")
+    asyncio.run(synthesize(full_text, VOICE, raw_path))
+    enhance_audio(raw_path, output_path)
+    if os.path.exists(raw_path):
+        os.remove(raw_path)
     print("[OK] Narration saved: " + output_path)
-    print("[INFO] Running Whisper for word timestamps...")
+    print("[INFO] Running Whisper medium model...")
     model = whisper.load_model("medium")
     result = model.transcribe(output_path, word_timestamps=True, language="en")
     words = []
