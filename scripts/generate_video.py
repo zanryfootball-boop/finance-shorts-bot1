@@ -108,7 +108,6 @@ def prepare_image(img_path):
     img = img.filter(ImageFilter.GaussianBlur(radius=1))
     img = ImageEnhance.Brightness(img).enhance(0.38)
     img = ImageEnhance.Contrast(img).enhance(1.3)
-    img = ImageEnhance.Saturation(img).enhance(1.2)
     return img
 
 def apply_ken_burns(img, t, duration, style):
