@@ -100,12 +100,15 @@ def generate_script():
         max_tokens=1000,
         temperature=0.9,
     )
-    raw = response.choices[0].message.content.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    raw = raw.strip()
+  raw = response.choices[0].message.content.strip()
+if "```" in raw:
+    raw = raw.split("```")[1]
+    if raw.startswith("json"):
+        raw = raw[4:]
+raw = raw.strip()
+start = raw.find("{")
+end = raw.rfind("}") + 1
+raw = raw[start:end]
     script = json.loads(raw)
     script["niche"] = niche
     script["generated_at"] = datetime.utcnow().isoformat()
