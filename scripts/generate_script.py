@@ -68,14 +68,15 @@ def generate_script():
         "You are a viral YouTube Shorts script writer specializing in finance and money. "
         "Write a 60-second mind-blowing script for a Short about: " + niche + "\n\n"
         "The video is for the " + slot + " audience.\n\n"
-        "Rules:\n"
-        "- Start with a shocking money hook that makes people stop scrolling\n"
-        "- Use simple language anyone can understand\n"
-        "- Each line must be short and punchy (max 10 words)\n"
-        "- Include one shocking money statistic or fact\n"
-        "- End with a strong call to action\n\n"
-        "Return ONLY valid JSON with this exact structure:\n"
-        "{\n"
+       "Rules:\n"
+       "- Start with a shocking money hook that stops people scrolling\n"
+       "- Write each line as a complete sentence, not a fragment\n"
+       "- Each line maximum 12 words, clear and powerful\n"
+       "- Add natural flow between lines, each line connects to the next\n"
+       "- Use pauses naturally, do not rush the content\n"
+       "- Include one shocking money statistic with exact numbers\n"
+       "- Speak like a professional documentary narrator\n"
+       "- End with a powerful emotional call to action\n\n"
         '  "title": "YouTube title (max 70 chars, money/finance focused)",\n'
         '  "description": "YouTube description (2-3 sentences) end with these exact hashtags: ' + hashtags + ' #shorts",\n'
         '  "tags": ["shorts", "youtubeshorts"],\n'
