@@ -43,7 +43,10 @@ def fallback_tts(text, output_path):
     import asyncio
     import edge_tts
     async def synthesize():
-        communicate = edge_tts.Communicate(text, "en-US-AndrewNeural", rate="-12%", pitch="-2Hz", volume="+10%")
+        communicate = edge_tts.Communicate(
+            text, "en-US-AndrewNeural",
+            rate="-12%", pitch="-2Hz", volume="+10%"
+        )
         await communicate.save(output_path)
     asyncio.run(synthesize())
     print("[OK] Fallback edge-tts done")
@@ -51,13 +54,10 @@ def fallback_tts(text, output_path):
 def generate_tts(script_path="script.json", output_path="narration.mp3"):
     with open(script_path) as f:
         script = json.load(f)
-
     full_text = build_text(script)
     full_text = fix_pronunciation(full_text)
-
     print("[INFO] Generating voice with Kokoro TTS...")
     raw_path = output_path.replace(".mp3", "_raw.wav")
-
     kokoro_script = (
         "from kokoro import KPipeline\n"
         "import soundfile as sf\n"
@@ -72,22 +72,18 @@ def generate_tts(script_path="script.json", output_path="narration.mp3"):
         "    sf.write('" + raw_path + "', full_audio, 24000)\n"
         "    print('Kokoro done')\n"
     )
-
     with open("kokoro_run.py", "w") as f:
         f.write(kokoro_script)
-
     result = subprocess.run(["python3", "kokoro_run.py"], capture_output=True, text=True)
     print(result.stdout)
-
     if result.returncode != 0 or not os.path.exists(raw_path):
-        print("[WARN] Kokoro failed: " + result.stderr[:300])
-        print("[INFO] Falling back to edge-tts...")
+        print("[WARN] Kokoro failed, using edge-tts...")
         fallback_tts(full_text, output_path)
     else:
         try:
             subprocess.run([
                 "ffmpeg", "-y", "-i", raw_path,
-                "-af", "highpass=f=80,lowpass=f=12000,volume=1.5",
+                "-af", "highpass=f=80,lowpass=f=12000,volume=1.5,acompressor=threshold=-20dB:ratio=3:attack=5:release=50",
                 "-ar", "44100", "-ac", "1",
                 output_path
             ], check=True, capture_output=True)
@@ -98,10 +94,8 @@ def generate_tts(script_path="script.json", output_path="narration.mp3"):
             shutil.copy(raw_path, output_path)
         if os.path.exists(raw_path):
             os.remove(raw_path)
-
     if os.path.exists("kokoro_run.py"):
         os.remove("kokoro_run.py")
-
     print("[OK] Narration saved: " + output_path)
     print("[INFO] Running Whisper medium model...")
     model = whisper.load_model("medium")
