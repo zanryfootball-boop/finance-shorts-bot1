@@ -302,15 +302,6 @@ def generate_video(script_path="script.json", audio_path="narration.mp3", timest
         if os.path.exists(save_path):
             os.remove(save_path)
     final_audio = audio_path
-    if os.path.exists("music.wav"):
-        print("[INFO] Mixing with background music...")
-        mixed_path = "final_audio.mp3"
-        try:
-            from generate_music import mix_audio
-            mix_audio(audio_path, "music.wav", mixed_path)
-            final_audio = mixed_path
-        except Exception as e:
-            print("[WARN] Music mix failed: " + str(e))
     audio_duration = get_audio_duration(final_audio)
     print("[INFO] Audio duration: " + str(round(audio_duration, 2)) + "s")
     total_frames = int(audio_duration * FPS) + FPS
