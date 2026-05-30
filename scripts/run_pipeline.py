@@ -9,21 +9,18 @@ def log(msg):
 
 def run():
     log("=== Finance Shorts Bot Starting ===")
-    log("Step 1/5: Generating script...")
+    log("Step 1/4: Generating script...")
     from generate_script import generate_script
     script = generate_script()
     log("Niche: " + script["niche"])
     log("Title: " + script["title"])
-    log("Step 2/5: Generating TTS narration...")
+    log("Step 2/4: Generating TTS narration...")
     from generate_tts import generate_tts
     generate_tts()
-    log("Step 3/5: Generating background music...")
-    from generate_music import generate_cinematic_music
-    generate_cinematic_music()
-    log("Step 4/5: Rendering video...")
+    log("Step 3/4: Rendering video...")
     from generate_video import generate_video
     generate_video()
-    log("Step 5/5: Uploading to YouTube...")
+    log("Step 4/4: Uploading to YouTube...")
     from upload_to_youtube import upload_video
     video_id = upload_video()
     log("=== Done! https://youtube.com/shorts/" + video_id + " ===")
