@@ -24,15 +24,16 @@ def upload_video(script_path="script.json", video_path="short.mp4"):
     youtube = build("youtube", "v3", credentials=creds)
     body = {
         "snippet": {
-            "title": script["title"],
+            "title": script["title"] + " #shorts",
             "description": script["description"],
-            "tags": script.get("tags", []) + ["shorts", "youtubeshorts"],
+            "tags": script.get("tags", []) + ["shorts", "youtubeshorts", "short"],
             "categoryId": "22",
             "defaultLanguage": "en",
         },
         "status": {
             "privacyStatus": "public",
             "selfDeclaredMadeForKids": False,
+            "madeForKids": False,
         },
     }
     media = MediaFileUpload(video_path, mimetype="video/mp4", resumable=True, chunksize=1024 * 1024 * 5)
