@@ -11,56 +11,58 @@ from io import BytesIO
 
 WIDTH, HEIGHT = 1080, 1920
 FPS = 30
-LETTERBOX = 80
+SAFE_TOP = 120
+SAFE_BOTTOM = 120
+SUBTITLE_Y = int(HEIGHT * 0.72)
 
 COLOR_THEMES = {
-    "money_green":    {"accent": (0, 200, 80),   "text": (255, 255, 255), "sub": (100, 255, 150), "glow": (0, 200, 80),  "highlight": (0, 255, 100)},
-    "gold_rich":      {"accent": (255, 200, 0),  "text": (255, 255, 255), "sub": (255, 220, 80),  "glow": (255, 200, 0),  "highlight": (255, 230, 50)},
-    "dark_wealth":    {"accent": (200, 160, 50), "text": (255, 255, 255), "sub": (220, 190, 100), "glow": (200, 160, 50), "highlight": (240, 200, 80)},
-    "crypto_blue":    {"accent": (0, 150, 255),  "text": (255, 255, 255), "sub": (100, 180, 255), "glow": (0, 150, 255),  "highlight": (80, 200, 255)},
-    "platinum_white": {"accent": (200, 210, 255),"text": (255, 255, 255), "sub": (220, 225, 255), "glow": (200, 210, 255),"highlight": (255, 255, 255)},
+    "money_green":    {"accent": (0, 200, 80),   "text": (255, 255, 255), "highlight": (0, 255, 100),  "glow": (0, 180, 60),  "dim": (180, 180, 180)},
+    "gold_rich":      {"accent": (255, 200, 0),  "text": (255, 255, 255), "highlight": (255, 235, 80),  "glow": (255, 180, 0),  "dim": (180, 180, 180)},
+    "dark_wealth":    {"accent": (200, 160, 50), "text": (255, 255, 255), "highlight": (240, 200, 80),  "glow": (180, 140, 30), "dim": (180, 180, 180)},
+    "crypto_blue":    {"accent": (0, 150, 255),  "text": (255, 255, 255), "highlight": (80, 200, 255),  "glow": (0, 100, 255),  "dim": (180, 180, 180)},
+    "platinum_white": {"accent": (200, 210, 255),"text": (255, 255, 255), "highlight": (255, 255, 255), "glow": (180, 190, 255),"dim": (180, 180, 180)},
 }
 
 BACKGROUND_PROMPTS = {
-    "money_rain": [
-        "raining hundred dollar bills dark cinematic dramatic luxury 4k",
-        "money cash flying through air dark background cinematic luxury",
-        "dollar bills falling slow motion dark dramatic cinematic 4k",
+    "money_rain":     [
+        "raining hundred dollar bills dark cinematic dramatic luxury 4k professional",
+        "money cash flying through air dark background luxury cinematic professional",
+        "dollar bills falling slow motion dark dramatic cinematic luxury 4k",
     ],
-    "stock_chart": [
+    "stock_chart":    [
         "wall street stock market trading screens green charts dark cinematic 4k",
-        "financial trading floor screens data green uptrend dramatic 4k",
-        "stock market bull run green charts dark luxury cinematic professional",
+        "financial trading floor screens data green uptrend dramatic 4k professional",
+        "stock market bull run green charts dark luxury cinematic professional 4k",
     ],
-    "gold_bars": [
-        "gold bars stacked vault dark dramatic luxury cinematic 4k",
-        "shining gold ingots wealth vault dark dramatic professional 4k",
+    "gold_bars":      [
+        "gold bars stacked vault dark dramatic luxury cinematic 4k professional",
+        "shining gold ingots wealth vault dark dramatic professional 4k cinematic",
         "gold treasure vault dark dramatic luxury cinematic reflection 4k",
     ],
-    "city_skyline": [
-        "new york city skyline night aerial financial district dark 4k",
-        "futuristic city skyscrapers night lights wealth dramatic cinematic",
+    "city_skyline":   [
+        "new york city skyline night aerial financial district dark 4k cinematic",
+        "futuristic city skyscrapers night lights wealth dramatic cinematic professional",
         "manhattan skyline night luxury wealth dark dramatic cinematic 4k",
     ],
     "crypto_network": [
         "bitcoin blockchain network glowing blue dark digital cinematic 4k",
-        "cryptocurrency digital network nodes glowing dark futuristic 4k",
-        "blockchain technology network blue glowing dark cinematic professional",
+        "cryptocurrency digital network nodes glowing dark futuristic 4k professional",
+        "blockchain technology network blue glowing dark cinematic professional 4k",
     ],
-    "bank_vault": [
+    "bank_vault":     [
         "massive bank vault door open gold dark dramatic cinematic 4k",
-        "luxury bank safe interior gold dark dramatic professional 4k",
-        "bank vault door closing dark dramatic wealth cinematic 4k",
+        "luxury bank safe interior gold dark dramatic professional 4k cinematic",
+        "bank vault door dark dramatic wealth cinematic 4k professional",
     ],
-    "coin_stack": [
+    "coin_stack":     [
         "gold coins stacking wealth dark luxury dramatic cinematic 4k",
-        "pile of gold coins wealth dark luxury dramatic professional",
+        "pile of gold coins wealth dark luxury dramatic professional 4k",
         "gold silver coins growing stack dark cinematic luxury 4k",
     ],
-    "growth_graph": [
-        "financial growth chart green upward dark success cinematic 4k",
+    "growth_graph":   [
+        "financial growth chart green upward dark success cinematic 4k professional",
         "stock market growth uptrend success dark dramatic professional 4k",
-        "business financial success chart dark dramatic cinematic 4k",
+        "business financial success chart dark dramatic cinematic 4k professional",
     ],
 }
 
@@ -114,9 +116,9 @@ def apply_ken_burns(img, t, duration, style):
     iw, ih = img.size
     max_zoom = 1.10
     if style == "zoom_in":
-        scale = 1.0 + (max_zoom - 1.0) * (t / duration)
+        scale = 1.0 + (max_zoom - 1.0) * (t / max(duration, 0.001))
     elif style == "zoom_out":
-        scale = max_zoom - (max_zoom - 1.0) * (t / duration)
+        scale = max_zoom - (max_zoom - 1.0) * (t / max(duration, 0.001))
     elif style == "pan_right":
         scale = 1.05
     elif style == "pan_left":
@@ -126,10 +128,10 @@ def apply_ken_burns(img, t, duration, style):
     new_w = int(iw / scale)
     new_h = int(ih / scale)
     if style == "pan_right":
-        x_offset = int((iw - new_w) * (t / duration))
+        x_offset = int((iw - new_w) * (t / max(duration, 0.001)))
         y_offset = (ih - new_h) // 2
     elif style == "pan_left":
-        x_offset = int((iw - new_w) * (1 - t / duration))
+        x_offset = int((iw - new_w) * (1 - t / max(duration, 0.001)))
         y_offset = (ih - new_h) // 2
     else:
         x_offset = (iw - new_w) // 2
@@ -140,14 +142,30 @@ def apply_ken_burns(img, t, duration, style):
 def crossfade(img1, img2, alpha):
     return Image.blend(img1.convert("RGB"), img2.convert("RGB"), alpha)
 
-def draw_glow_text(draw, text, font, x, y, text_color, glow_color):
-    for radius in range(5, 0, -1):
-        for dx in range(-radius, radius + 1):
-            for dy in range(-radius, radius + 1):
-                if abs(dx) + abs(dy) <= radius:
-                    draw.text((x + dx, y + dy), text, font=font, fill=glow_color)
-    draw.text((x + 3, y + 3), text, font=font, fill=(0, 0, 0))
-    draw.text((x, y), text, font=font, fill=text_color)
+def draw_subtitle(draw, word, font, theme, y_pos):
+    if not word:
+        return
+    word_upper = word.upper()
+    w = draw.textlength(word_upper, font=font)
+    x = (WIDTH - w) // 2
+    pad_x = 40
+    pad_y = 22
+    box_x0 = x - pad_x
+    box_y0 = y_pos - pad_y
+    box_x1 = x + w + pad_x
+    box_y1 = y_pos + font.size + pad_y
+    draw.rounded_rectangle([box_x0, box_y0, box_x1, box_y1], radius=20, fill=(0, 0, 0))
+    a = theme["accent"]
+    draw.rounded_rectangle(
+        [box_x0 - 3, box_y0 - 3, box_x1 + 3, box_y1 + 3],
+        radius=22, outline=a, width=3
+    )
+    for dx in range(-3, 4):
+        for dy in range(-3, 4):
+            if abs(dx) + abs(dy) <= 3:
+                draw.text((x + dx, y_pos + dy), word_upper, font=font, fill=theme["glow"])
+    draw.text((x + 2, y_pos + 2), word_upper, font=font, fill=(0, 0, 0))
+    draw.text((x, y_pos), word_upper, font=font, fill=theme["highlight"])
 
 def get_current_word(timestamps, t):
     for item in timestamps:
@@ -155,28 +173,18 @@ def get_current_word(timestamps, t):
             return item["word"]
     return None
 
-def draw_title_card(draw, title, font, theme, alpha):
-    tw = draw.textlength(title, font=font)
-    tx = (WIDTH - tw) // 2
-    ty = HEIGHT // 2 - font.size // 2
-    pad = 40
-    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
-    od = ImageDraw.Draw(overlay)
-    od.rounded_rectangle(
-        [tx - pad, ty - pad, tx + tw + pad, ty + font.size + pad],
-        radius=30,
-        fill=(0, 0, 0, int(200 * alpha))
-    )
-    a = theme["accent"]
-    od.rounded_rectangle(
-        [tx - pad - 4, ty - pad - 4, tx + tw + pad + 4, ty + font.size + pad + 4],
-        radius=32,
-        outline=(a[0], a[1], a[2], int(255 * alpha)),
-        width=3
-    )
-    return overlay, tx, ty
+def add_vignette(img):
+    vignette = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(vignette)
+    for r in range(min(WIDTH, HEIGHT) // 2, 0, -2):
+        alpha = int(120 * (1 - r / (min(WIDTH, HEIGHT) / 2)) ** 2)
+        draw.ellipse(
+            [WIDTH // 2 - r, HEIGHT // 2 - r, WIDTH // 2 + r, HEIGHT // 2 + r],
+            outline=(0, 0, 0, alpha), width=2
+        )
+    return Image.alpha_composite(img.convert("RGBA"), vignette).convert("RGB")
 
-def render_frame(frame_idx, script, theme, timestamps, total_frames, bg_images, font_word, font_hook, font_small, font_title, audio_duration):
+def render_frame(frame_idx, script, theme, timestamps, total_frames, bg_images, font_sub, font_hook, font_small, font_title, audio_duration):
     t = frame_idx / FPS
     total_duration = audio_duration
     num_images = len(bg_images)
@@ -193,35 +201,50 @@ def render_frame(frame_idx, script, theme, timestamps, total_frames, bg_images, 
         next_bg = apply_ken_burns(bg_images[next_index], 0, img_duration, next_kb)
         alpha = (time_in_img - (img_duration - fade_duration)) / fade_duration
         current_bg = crossfade(current_bg, next_bg, max(0.0, min(1.0, alpha)))
-
-    img = current_bg.copy().convert("RGBA")
+    img = add_vignette(current_bg)
+    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    od = ImageDraw.Draw(overlay)
+    od.rectangle([0, 0, WIDTH, SAFE_TOP], fill=(0, 0, 0, 200))
+    od.rectangle([0, HEIGHT - SAFE_BOTTOM, WIDTH, HEIGHT], fill=(0, 0, 0, 200))
+    img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
     draw = ImageDraw.Draw(img)
-
-    draw.rectangle([0, 0, WIDTH, LETTERBOX], fill=(0, 0, 0, 255))
-    draw.rectangle([0, HEIGHT - LETTERBOX, WIDTH, HEIGHT], fill=(0, 0, 0, 255))
-
     INTRO_DURATION = 2.0
     OUTRO_START = total_duration - 2.5
-
     if t < INTRO_DURATION:
-        fade_alpha = min(1.0, t / 0.5)
+        fade_alpha = min(1.0, t / 0.6)
         title = script.get("title", "")[:50]
-        overlay, tx, ty = draw_title_card(draw, title, font_title, theme, fade_alpha)
-        img = Image.alpha_composite(img, overlay)
+        tw = draw.textlength(title, font=font_title)
+        tx = (WIDTH - tw) // 2
+        ty = HEIGHT // 2 - font_title.size // 2
+        pad = 45
+        title_overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        tod = ImageDraw.Draw(title_overlay)
+        tod.rounded_rectangle(
+            [tx - pad, ty - pad, tx + tw + pad, ty + font_title.size + pad],
+            radius=30, fill=(0, 0, 0, int(220 * fade_alpha))
+        )
+        a = theme["accent"]
+        tod.rounded_rectangle(
+            [tx - pad - 4, ty - pad - 4, tx + tw + pad + 4, ty + font_title.size + pad + 4],
+            radius=34, outline=(a[0], a[1], a[2], int(255 * fade_alpha)), width=4
+        )
+        img = Image.alpha_composite(img.convert("RGBA"), title_overlay).convert("RGB")
         draw = ImageDraw.Draw(img)
-        draw.text((tx + 2, ty + 2), title, font=font_title, fill=(0, 0, 0))
+        for dx in range(-2, 3):
+            for dy in range(-2, 3):
+                if abs(dx) + abs(dy) <= 2:
+                    draw.text((tx + dx, ty + dy), title, font=font_title, fill=theme["glow"])
         draw.text((tx, ty), title, font=font_title, fill=theme["highlight"])
-
     elif t > OUTRO_START:
-        fade_alpha = min(1.0, (t - OUTRO_START) / 0.5)
-        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, int(180 * fade_alpha)))
-        img = Image.alpha_composite(img, overlay)
+        fade_alpha = min(1.0, (t - OUTRO_START) / 0.6)
+        outro_overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, int(200 * fade_alpha)))
+        img = Image.alpha_composite(img.convert("RGBA"), outro_overlay).convert("RGB")
         draw = ImageDraw.Draw(img)
         follow_text = "FOLLOW FOR MORE"
         fw = draw.textlength(follow_text, font=font_hook)
         fx = (WIDTH - fw) // 2
         fy = HEIGHT // 2 - font_hook.size // 2
-        pad = 40
+        pad = 45
         a = theme["accent"]
         draw.rounded_rectangle(
             [fx - pad, fy - pad, fx + fw + pad, fy + font_hook.size + pad],
@@ -229,59 +252,46 @@ def render_frame(frame_idx, script, theme, timestamps, total_frames, bg_images, 
         )
         draw.rounded_rectangle(
             [fx - pad - 4, fy - pad - 4, fx + fw + pad + 4, fy + font_hook.size + pad + 4],
-            radius=32, outline=a, width=4
+            radius=34, outline=a, width=4
         )
-        draw_glow_text(draw, follow_text, font_hook, fx, fy, theme["highlight"], theme["glow"])
-
+        for dx in range(-3, 4):
+            for dy in range(-3, 4):
+                if abs(dx) + abs(dy) <= 3:
+                    draw.text((fx + dx, fy + dy), follow_text, font=font_hook, fill=theme["glow"])
+        draw.text((fx, fy), follow_text, font=font_hook, fill=theme["highlight"])
     else:
         current_word = get_current_word(timestamps, t)
+        is_hook = t < (timestamps[3]["end"] if len(timestamps) > 3 else 3)
+        font = font_hook if is_hook else font_sub
         if current_word:
-            is_start = t < (timestamps[3]["end"] if len(timestamps) > 3 else 3)
-            font = font_hook if is_start else font_word
-            word_upper = current_word.upper()
-            w = draw.textlength(word_upper, font=font)
-            x = (WIDTH - w) // 2
-            y = HEIGHT // 2 - font.size // 2
-            pad = 35
-            draw.rounded_rectangle(
-                [x - pad, y - pad, x + w + pad, y + font.size + pad],
-                radius=25, fill=(0, 0, 0)
-            )
-            a = theme["accent"]
-            draw.rounded_rectangle(
-                [x - pad - 3, y - pad - 3, x + w + pad + 3, y + font.size + pad + 3],
-                radius=27, outline=a, width=2
-            )
-            draw_glow_text(draw, word_upper, font, x, y, theme["highlight"], theme["glow"])
-
+            draw_subtitle(draw, current_word, font, theme, SUBTITLE_Y)
     progress = min(t / total_duration, 1.0)
-    bar_y = HEIGHT - LETTERBOX + 8
-    draw.rectangle([0, bar_y, WIDTH, bar_y + 6], fill=(40, 40, 40))
-    draw.rectangle([0, bar_y, int(WIDTH * progress), bar_y + 6], fill=theme["accent"])
-
+    bar_y = HEIGHT - SAFE_BOTTOM + 15
+    draw.rectangle([40, bar_y, WIDTH - 40, bar_y + 6], fill=(60, 60, 60))
+    draw.rectangle([40, bar_y, 40 + int((WIDTH - 80) * progress), bar_y + 6], fill=theme["accent"])
+    draw.ellipse([
+        40 + int((WIDTH - 80) * progress) - 8, bar_y - 5,
+        40 + int((WIDTH - 80) * progress) + 8, bar_y + 11
+    ], fill=theme["highlight"])
     niche_text = script.get("niche", "").upper()[:40]
     nw = draw.textlength(niche_text, font=font_small)
     nx = (WIDTH - nw) // 2
-    draw.text((nx, LETTERBOX - font_small.size - 15), niche_text, font=font_small, fill=theme["sub"])
-
-    return img.convert("RGB")
+    draw.text((nx, 45), niche_text, font=font_small, fill=theme["highlight"])
+    return img
 
 def generate_video(script_path="script.json", audio_path="narration.mp3", timestamps_path="timestamps.json", output_path="short.mp4"):
     with open(script_path) as f:
         script = json.load(f)
     with open(timestamps_path) as f:
         timestamps = json.load(f)
-
     theme = COLOR_THEMES.get(script.get("color_theme", "money_green"), COLOR_THEMES["money_green"])
-    font_word  = get_font(100)
-    font_hook  = get_font(90)
-    font_small = get_font(36)
-    font_title = get_font(56)
-
+    font_sub   = get_font(96)
+    font_hook  = get_font(86)
+    font_small = get_font(34)
+    font_title = get_font(52)
     bg_style = script.get("background_style", "money_rain")
     prompts = BACKGROUND_PROMPTS.get(bg_style, BACKGROUND_PROMPTS["money_rain"])
-
-    print("[INFO] Downloading " + str(len(prompts)) + " AI images from Pollinations...")
+    print("[INFO] Downloading " + str(len(prompts)) + " AI images...")
     bg_images = []
     for i, prompt in enumerate(prompts):
         save_path = "bg_" + str(i) + ".jpg"
@@ -291,32 +301,32 @@ def generate_video(script_path="script.json", audio_path="narration.mp3", timest
         bg_images.append(img)
         if os.path.exists(save_path):
             os.remove(save_path)
-
-    final_audio = "final_audio.mp3"
-    if os.path.exists("music.wav") and os.path.exists(audio_path):
-        print("[INFO] Mixing voice with background music...")
-        from generate_music import mix_audio
-        mix_audio(audio_path, "music.wav", final_audio)
-    else:
-        final_audio = audio_path
-
+    final_audio = audio_path
+    if os.path.exists("music.wav"):
+        print("[INFO] Mixing with background music...")
+        mixed_path = "final_audio.mp3"
+        try:
+            from generate_music import mix_audio
+            mix_audio(audio_path, "music.wav", mixed_path)
+            final_audio = mixed_path
+        except Exception as e:
+            print("[WARN] Music mix failed: " + str(e))
     audio_duration = get_audio_duration(final_audio)
     print("[INFO] Audio duration: " + str(round(audio_duration, 2)) + "s")
     total_frames = int(audio_duration * FPS) + FPS
     frames_dir = tempfile.mkdtemp()
-
     print("[INFO] Rendering " + str(total_frames) + " frames...")
     for i in range(total_frames):
         if i % (FPS * 5) == 0:
             print("  Frame " + str(i) + "/" + str(total_frames))
-        frame = render_frame(i, script, theme, timestamps, total_frames, bg_images, font_word, font_hook, font_small, font_title, audio_duration)
+        frame = render_frame(i, script, theme, timestamps, total_frames, bg_images, font_sub, font_hook, font_small, font_title, audio_duration)
         frame.save(os.path.join(frames_dir, "frame_{:05d}.png".format(i)))
-
     video_no_audio = output_path.replace(".mp4", "_noaudio.mp4")
     subprocess.run([
         "ffmpeg", "-y", "-framerate", str(FPS),
         "-i", os.path.join(frames_dir, "frame_%05d.png"),
-        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+        "-c:v", "libx264", "-pix_fmt", "yuv420p",
+        "-preset", "fast", "-crf", "18",
         video_no_audio
     ], check=True)
     subprocess.run([
